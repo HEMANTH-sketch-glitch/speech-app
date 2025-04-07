@@ -1,0 +1,3 @@
+Flask==2.0.1
+vosk==0.3.45
+gunicorn==20.1.0
