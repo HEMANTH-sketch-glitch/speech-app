@@ -1,11 +1,12 @@
 from flask import Flask, request, jsonify
-from vosk import Model, KaldiRecognizer
+from flask_cors import CORS  # New import
 import json
 import os
 
 app = Flask(__name__)
+CORS(app)  # New line - enables CORS for all routes
 
-# Language configuration
+# Your existing configuration
 LANGUAGE_MODELS = {
     "en": "models/vosk-model-small-en-us-0.15",
     "hi": "models/vosk-model-small-hi-0.22",
@@ -15,23 +16,16 @@ LANGUAGE_MODELS = {
 @app.route('/recognize', methods=['POST'])
 def recognize():
     try:
-        # Get audio data and language from frontend
-        audio_data = request.json['audio']  # List of numbers
-        language = request.json.get('lang', 'en')  # Default to English
+        audio_data = request.json['audio']
+        language = request.json.get('lang', 'en')
         
-        # Load the correct model
         model_path = LANGUAGE_MODELS[language]
         if not os.path.exists(model_path):
             return jsonify({"error": f"Model for {language} not found"}), 400
         
         model = Model(model_path)
-        recognizer = KaldiRecognizer(model, 16000)  # 16000 Hz sample rate
-        
-        # Convert audio data to bytes
-        audio_bytes = bytes(audio_data)
-        
-        # Process audio
-        recognizer.AcceptWaveform(audio_bytes)
+        recognizer = KaldiRecognizer(model, 16000)
+        recognizer.AcceptWaveform(bytes(audio_data))
         result = json.loads(recognizer.Result())
         
         return jsonify({"text": result.get("text", "")})
